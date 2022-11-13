@@ -70,9 +70,10 @@ function buildInternetGateway() {
  * Build a SecurityGroup to be used by applications
  *
  * @param {Object} prefixLists AWS-owned managed prefix lists in the region
+ * @param {Array} additionalExternalPortList
  * @return {Object}
  */
-function buildAppSecurityGroup(prefixLists = null) {
+function buildAppSecurityGroup(prefixLists = null, additionalExternalPortList = null) {
   const egress = [
     {
       Description: 'permit HTTPS outbound',
@@ -82,6 +83,24 @@ function buildAppSecurityGroup(prefixLists = null) {
       CidrIp: '0.0.0.0/0',
     },
   ];
+  if (additionalExternalPortList) {
+    additionalExternalPortList.forEach((port) => {
+      egress.push({
+        Description: `permit tcp ${port} outbound (ipv4)`,
+        IpProtocol: 'tcp',
+        FromPort: port,
+        ToPort: port,
+        CidrIp: '0.0.0.0/0',
+      })
+      egress.push({
+        Description: `permit tcp ${port} outbound (ipv6)`,
+        IpProtocol: 'tcp',
+        FromPort: port,
+        ToPort: port,
+        CidrIpv6: '::/0',
+      })
+    })
+  }
   if (prefixLists) {
     egress.push({
       DestinationPrefixListId: prefixLists.s3,

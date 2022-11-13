@@ -49,6 +49,7 @@ class ServerlessVpcPlugin {
     let exportOutputs = false;
     let subnetGroups = VALID_SUBNET_GROUPS;
     let eipAllocationIds = [];
+    let additionalExternalPortList = [];
 
     const { vpcConfig } = this.serverless.service.custom;
 
@@ -80,6 +81,12 @@ class ServerlessVpcPlugin {
             }
             return id;
           });
+      }
+      if (Array.isArray(vpcConfig.additionalExternalPortList) && vpcConfig.additionalExternalPortList.length > 0) {
+        additionalExternalPortList = vpcConfig.additionalExternalPortList
+          .filter((z) => `${parseInt(z)}` === `${z}`)
+          .map((z) => parseInt(z))
+          .filter((z) => z)
       }
       if (Array.isArray(vpcConfig.zones) && vpcConfig.zones.length > 0) {
         zones = vpcConfig.zones.map((z) => z.trim().toLowerCase());
@@ -199,7 +206,7 @@ class ServerlessVpcPlugin {
         createNatInstance: !!(createNatInstance && vpcNatAmi),
         eipAllocationIds,
       }),
-      buildAppSecurityGroup(prefixLists),
+      buildAppSecurityGroup(prefixLists, additionalExternalPortList),
       buildDHCPOptions(region),
     );
 
